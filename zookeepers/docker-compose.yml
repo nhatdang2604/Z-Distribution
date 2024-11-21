@@ -1,0 +1,41 @@
+version: '2.1'
+
+services:
+  zookeep1:
+    image: zookeeper:3.4.14
+    hostname: zookeep1
+    ports:
+      - "2181:2181"
+    environment:
+        ZOO_MY_ID: 1
+        ZOO_PORT: 2181
+        ZOO_SERVERS: server.1=zookeep1:2888:3888 server.2=zookeep2:2888:3888 server.3=zookeep3:2888:3888
+    volumes:
+      - ./zookeep1/data:/data
+      - ./zookeep1/datalog:/datalog
+
+  zookeep2:
+    image: zookeeper:3.4.14
+    hostname: zookeep2
+    ports:
+      - "2182:2182"
+    environment:
+        ZOO_MY_ID: 2
+        ZOO_PORT: 2182
+        ZOO_SERVERS: server.1=zookeep1:2888:3888 server.2=zookeep2:2888:3888 server.3=zookeep3:2888:3888
+    volumes:
+      - ./zookeep2/data:/data
+      - ./zookeep2/datalog:/datalog
+
+  zookeep3:
+    image: zookeeper:3.4.14
+    hostname: zookeep3
+    ports:
+      - "2183:2183"
+    environment:
+        ZOO_MY_ID: 3
+        ZOO_PORT: 2183
+        ZOO_SERVERS: server.1=zookeep1:2888:3888 server.2=zookeep2:2888:3888 server.3=zookeep3:2888:3888
+    volumes:
+      - ./zookeep3/data:/data
+      - ./zookeep3/datalog:/datalog
