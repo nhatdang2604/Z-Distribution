@@ -5,29 +5,23 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
-	"github.com/nhatdang2604/z-distribution/config"
+	"github.com/nhatdang2604/z-distribution/engine/zk"
+	"github.com/nhatdang2604/z-distribution/engine/zk/config"
 )
 
 func main() {
 
 	// Establishe connection with Zookeeper
-	zkConfig := config.NewZkConfig()
-	_, err := zkConfig.Connect()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer zkConfig.Close()
-
-	// Initalize data for Zookeeper
-	var counterPath = "/counter"
-	var lockPath = "/lock"
-	err = zkConfig.Init(counterPath, lockPath)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	zkConfig := config.NewZkConfig(
+		1*time.Minute,
+		"/counter",
+		"/lock",
+	)
+	zkEngine := zk.NewZkEngine(zkConfig)
+	zkEngine.Start()
+	defer zkConfig.Stop()
 
 	// Read commands from user
 	reader := bufio.NewReader(os.Stdin)
@@ -35,6 +29,7 @@ func main() {
 		fmt.Print("Enter command (GET/INC): ")
 		cmd, _ := reader.ReadString('\n')
 		cmd = strings.TrimSpace(cmd)
-		zkConfig.Handle(cmd)
+		cmd = strings.ToLower(cmd)
+		zkEngine.Handle(cmd)
 	}
 }

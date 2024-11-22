@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	"github.com/go-zookeeper/zk"
+	"github.com/nhatdang2604/z-distribution/engine/zk/config"
 )
 
 type GetHandler struct {
-	zkConnection *zk.Conn
-	counterPath  string
+	zkConfig *config.ZkConfig
 }
 
 func (h *GetHandler) Key() string {
@@ -16,7 +16,9 @@ func (h *GetHandler) Key() string {
 }
 
 func (h *GetHandler) Handle() (int32, *zk.Stat, error) {
-	data, zkStat, err := h.zkConnection.Get(h.counterPath)
+	zkConnection := h.zkConfig.ZkConnection()
+	counterPath := h.zkConfig.CounterPath()
+	data, zkStat, err := zkConnection.Get(counterPath)
 	if err != nil {
 		return 0, zkStat, fmt.Errorf("get counter value with error on connection: %v", err)
 	}
@@ -30,9 +32,6 @@ func (h *GetHandler) Handle() (int32, *zk.Stat, error) {
 	return counter, zkStat, nil
 }
 
-func NewGetHandler(zkConnection *zk.Conn, counterPath string) *GetHandler {
-	return &GetHandler{
-		zkConnection: zkConnection,
-		counterPath:  counterPath,
-	}
+func NewGetHandler(zkConfig *config.ZkConfig) *GetHandler {
+	return &GetHandler{zkConfig: zkConfig}
 }

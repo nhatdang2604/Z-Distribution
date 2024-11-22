@@ -5,12 +5,12 @@ import (
 	"time"
 
 	"github.com/go-zookeeper/zk"
+	"github.com/nhatdang2604/z-distribution/engine/zk/config"
 )
 
 type IncHandler struct {
-	zkConnection *zk.Conn
-	lockPath     string
-	getHandler   *GetHandler
+	zkConfig   *config.ZkConfig
+	getHandler *GetHandler
 }
 
 func (h *IncHandler) Key() string {
@@ -20,28 +20,41 @@ func (h *IncHandler) Key() string {
 func (h *IncHandler) Handle() error {
 
 	// Leader Election: Create a lock node and try to acquire the lock
+	var zkConnection *zk.Conn = h.zkConfig.ZkConnection()
+	var lockNodePath string = h.zkConfig.LockPath()
 	var attempt int32 = 0
-	var lockPath string = h.lockPath + "/lock-"
-	lockNode, err := electLeader(lockPath, h.zkConnection, attempt)
+	var lockPath string = lockNodePath + "/lock-"
+	lockNode, err := electLeader(lockPath, zkConnection, attempt)
 	if err != nil {
 		return err
 	}
 
+	// Claim the lock
+	_, lockZkStat, err := zkConnection.Get(lockNode)
+	if err != nil {
+		return fmt.Errorf("error on claiming lock as %v with err: %v", lockNode, err)
+	}
+
+	// Release the lock
+	defer func() {
+		err := zkConnection.Delete(lockNode, lockZkStat.Version)
+		if err != nil {
+			fmt.Printf("Error on claiming lock as %v with err: %v\n", lockNode, err)
+		}
+	}()
+
 	//We are the leader now, attempt to get the current counter
-	counter, zkStat, err := h.getHandler.Handle()
+	counter, counterZkStat, err := h.getHandler.Handle()
 	if err != nil {
 		return err
 	}
 
 	//Attempt to increase the counter
-	var counterPath string = h.getHandler.counterPath
-	err = inc(counter, counterPath, h.zkConnection, zkStat)
+	var counterPath string = h.zkConfig.CounterPath()
+	err = inc(counter, counterPath, zkConnection, counterZkStat)
 	if err != nil {
 		return err
 	}
-
-	// Release the lock
-	h.zkConnection.Delete(lockNode, -1)
 
 	return nil
 }
@@ -98,15 +111,13 @@ func inc(
 }
 
 func NewIncHandler(
-	zkConnection *zk.Conn,
-	lockPath string,
+	zkConfig *config.ZkConfig,
 	getHandler *GetHandler,
 ) *IncHandler {
 
 	return &IncHandler{
-		zkConnection: zkConnection,
-		lockPath:     lockPath,
-		getHandler:   getHandler,
+		zkConfig:   zkConfig,
+		getHandler: getHandler,
 	}
 
 }
