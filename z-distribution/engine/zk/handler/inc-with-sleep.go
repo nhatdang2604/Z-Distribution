@@ -8,16 +8,16 @@ import (
 	"github.com/nhatdang2604/z-distribution/engine/zk/config"
 )
 
-type IncHandler struct {
+type IncWithSleepHandler struct {
 	zkConfig   *config.ZkConfig
 	getHandler *GetHandler
 }
 
-func (h *IncHandler) Key() string {
-	return "INC"
+func (h *IncWithSleepHandler) Key() string {
+	return "SLEEPINC"
 }
 
-func (h *IncHandler) Handle() error {
+func (h *IncWithSleepHandler) Handle() error {
 
 	// Leader Election: Create a lock node and try to acquire the lock
 	var zkConnection *zk.Conn = h.zkConfig.ZkConnection()
@@ -49,6 +49,8 @@ func (h *IncHandler) Handle() error {
 		return err
 	}
 
+	time.Sleep(10 * time.Second) // Force race condition occurred
+
 	//Attempt to increase the counter
 	var counterPath string = h.zkConfig.CounterPath()
 	err = h.inc(counter, counterPath, zkConnection, counterZkStat)
@@ -59,11 +61,11 @@ func (h *IncHandler) Handle() error {
 	return nil
 }
 
-func (h *IncHandler) electLeader(lockNode string, zkConnection *zk.Conn, attempt int32) (string, error) {
+func (h *IncWithSleepHandler) electLeader(lockNode string, zkConnection *zk.Conn, attempt int32) (string, error) {
 	path, err := zkConnection.Create(
 		lockNode,
 		[]byte{},
-		zk.FlagEphemeralSequential,
+		zk.FlagEphemeral,
 		zk.WorldACL(zk.PermAll),
 	)
 
@@ -91,7 +93,7 @@ func (h *IncHandler) electLeader(lockNode string, zkConnection *zk.Conn, attempt
 	return path, nil
 }
 
-func (h *IncHandler) inc(
+func (h *IncWithSleepHandler) inc(
 	counter int32,
 	counterPath string,
 	zkConnection *zk.Conn,
@@ -110,12 +112,12 @@ func (h *IncHandler) inc(
 	return nil
 }
 
-func NewIncHandler(
+func NewIncWithSleepHandler(
 	zkConfig *config.ZkConfig,
 	getHandler *GetHandler,
-) *IncHandler {
+) *IncWithSleepHandler {
 
-	return &IncHandler{
+	return &IncWithSleepHandler{
 		zkConfig:   zkConfig,
 		getHandler: getHandler,
 	}

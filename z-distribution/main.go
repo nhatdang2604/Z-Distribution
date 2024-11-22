@@ -26,7 +26,7 @@ func main() {
 	// Read commands from user
 	reader := bufio.NewReader(os.Stdin)
 	for {
-		fmt.Print("Enter command (GET/INC): ")
+		fmt.Print("Enter command (GET/INC/SLEEPINC): ")
 		cmd, _ := reader.ReadString('\n')
 		cmd = strings.TrimSpace(cmd)
 		cmd = strings.ToLower(cmd)

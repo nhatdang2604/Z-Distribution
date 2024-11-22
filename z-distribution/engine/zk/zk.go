@@ -9,9 +9,10 @@ import (
 )
 
 type ZkEngine struct {
-	config     *config.ZkConfig
-	getHandler *handler.GetHandler
-	incHandler *handler.IncHandler
+	config              *config.ZkConfig
+	getHandler          *handler.GetHandler
+	incHandler          *handler.IncHandler
+	incWithSleepHandler *handler.IncWithSleepHandler
 }
 
 func (e *ZkEngine) Start() error {
@@ -25,7 +26,7 @@ func (e *ZkEngine) Start() error {
 	// Init handlers
 	e.getHandler = handler.NewGetHandler(e.config)
 	e.incHandler = handler.NewIncHandler(e.config, e.getHandler)
-
+	e.incWithSleepHandler = handler.NewIncWithSleepHandler(e.config, e.getHandler)
 	return nil
 }
 
@@ -46,6 +47,13 @@ func (e *ZkEngine) Handle(cmd string) {
 		}
 	case strings.ToLower(e.incHandler.Key()):
 		err := e.incHandler.Handle()
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Println("Increase counter successfully")
+		}
+	case strings.ToLower(e.incWithSleepHandler.Key()):
+		err := e.incWithSleepHandler.Handle()
 		if err != nil {
 			fmt.Println(err)
 		} else {
