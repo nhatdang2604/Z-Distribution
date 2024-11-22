@@ -21,10 +21,10 @@ func (h *IncHandler) Handle() error {
 
 	// Leader Election: Create a lock node and try to acquire the lock
 	var zkConnection *zk.Conn = h.zkConfig.ZkConnection()
-	var lockNodePath string = h.zkConfig.LockPath()
+	var parentLockPath string = h.zkConfig.LockPath()
 	var attempt int32 = 0
-	var lockPath string = lockNodePath + "/lock-"
-	lockNode, err := electLeader(lockPath, zkConnection, attempt)
+	var lockPath string = parentLockPath + "/lock-"
+	lockNode, err := h.electLeader(lockPath, zkConnection, attempt)
 	if err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func (h *IncHandler) Handle() error {
 
 	//Attempt to increase the counter
 	var counterPath string = h.zkConfig.CounterPath()
-	err = inc(counter, counterPath, zkConnection, counterZkStat)
+	err = h.inc(counter, counterPath, zkConnection, counterZkStat)
 	if err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ func (h *IncHandler) Handle() error {
 	return nil
 }
 
-func electLeader(lockNode string, zkConnection *zk.Conn, attempt int32) (string, error) {
+func (h *IncHandler) electLeader(lockNode string, zkConnection *zk.Conn, attempt int32) (string, error) {
 	path, err := zkConnection.Create(
 		lockNode,
 		[]byte{},
@@ -81,17 +81,17 @@ func electLeader(lockNode string, zkConnection *zk.Conn, attempt int32) (string,
 		fmt.Printf("Leader already exists on attempt %v, waiting to become leader \n", attempt)
 		time.Sleep(2 * time.Second)
 		attempt++
-		return electLeader(lockNode, zkConnection, attempt)
+		return h.electLeader(lockNode, zkConnection, attempt)
 	}
 
 	if err != nil {
-		return "", fmt.Errorf("could not create lock: %v", err)
+		return "", fmt.Errorf("could not create lock %v with error: %v", lockNode, err)
 	}
 
 	return path, nil
 }
 
-func inc(
+func (h *IncHandler) inc(
 	counter int32,
 	counterPath string,
 	zkConnection *zk.Conn,
