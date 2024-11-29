@@ -23,9 +23,8 @@ func (c *ZkConfig) Start() error {
 		return err
 	}
 	c.zkConnection = conn
-	c.createNodeIfNotExists(c.counterPath, "0")
-	c.createNodeIfNotExists(c.lockPath, "")
-
+	c.createNodeIfNotExists(c.counterPath, "0", zk.FlagPersistent)
+	c.createNodeIfNotExists(c.lockPath, "", zk.FlagPersistent)
 	return nil
 }
 
@@ -39,7 +38,7 @@ func (c *ZkConfig) establishedConnection() (*zk.Conn, error) {
 	return conn, nil
 }
 
-func (c *ZkConfig) createNodeIfNotExists(node string, defaultVal string) error {
+func (c *ZkConfig) createNodeIfNotExists(node string, defaultVal string, zkFlags int32) error {
 	exists, _, err := c.zkConnection.Exists(node)
 	if err != nil {
 		return fmt.Errorf("error on checking node on %v with error: %v", node, err)
@@ -48,7 +47,7 @@ func (c *ZkConfig) createNodeIfNotExists(node string, defaultVal string) error {
 		_, err = c.zkConnection.Create(
 			node,
 			[]byte(defaultVal),
-			zk.FlagPersistent,
+			zkFlags,
 			zk.WorldACL(zk.PermAll),
 		)
 

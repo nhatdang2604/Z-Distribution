@@ -63,7 +63,7 @@ func (h *IncHandler) electLeader(lockNode string, zkConnection *zk.Conn, attempt
 	path, err := zkConnection.Create(
 		lockNode,
 		[]byte{},
-		zk.FlagEphemeralSequential,
+		zk.FlagEphemeral,
 		zk.WorldACL(zk.PermAll),
 	)
 
