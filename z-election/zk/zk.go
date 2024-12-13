@@ -59,6 +59,7 @@ func (ec *ElectionCandidate) Handle(cmd string) (interface{}, error) {
 	}
 
 	if isLeader {
+		fmt.Printf("Node with id=%v is the leader now\n", ec.config.NodeId())
 		return ec.execute(cmd)
 	} else {
 		fmt.Printf("Node with id=%v is not the leader\n", ec.config.NodeId())
@@ -116,6 +117,8 @@ func (ec *ElectionCandidate) isBecomeLeader(candidateNode string) (bool, error) 
 }
 
 func (ec *ElectionCandidate) execute(cmd string) (interface{}, error) {
+	cmd = strings.TrimSpace(cmd)
+	cmd = strings.ToLower(cmd)
 	switch cmd {
 	case strings.ToLower(ec.incHandler.Key()):
 		{
@@ -127,7 +130,7 @@ func (ec *ElectionCandidate) execute(cmd string) (interface{}, error) {
 			}
 
 			//Get and print the concensusVal value
-			cmd := strings.ToLower(ec.getHandler.Key())
+			cmd := ec.getHandler.Key()
 			return ec.execute(cmd)
 		}
 

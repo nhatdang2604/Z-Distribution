@@ -19,7 +19,6 @@ type ZkConfig struct {
 }
 
 func (c *ZkConfig) Start() error {
-	c.nodeId = int32(time.Now().UnixNano())
 	conn, err := c.establishedConnection()
 	if err != nil {
 		return err
@@ -87,6 +86,7 @@ func (c *ZkConfig) ConsensusPath() string {
 // \Getters
 
 func NewZkConfig(
+	nodeId int32,
 	sessionTimeoutAfter time.Duration,
 	leaderPath string,
 	consensusPath string,
@@ -98,6 +98,7 @@ func NewZkConfig(
 	servers := strings.Split(envVal, ",")
 
 	return &ZkConfig{
+		nodeId:              nodeId,
 		servers:             servers,
 		sessionTimeoutAfter: sessionTimeoutAfter,
 		leaderPath:          leaderPath,

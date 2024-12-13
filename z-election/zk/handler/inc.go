@@ -44,12 +44,12 @@ func (h *IncHandler) inc(
 
 	consensusVal++
 	nodeId := h.zkConfig.NodeId()
-	fmt.Printf("Node Id=%v is attempting to increment consensus value to %d\n", nodeId, consensusVal)
+	fmt.Printf("Node with id=%v is attempting to increment consensus value to %d\n", nodeId, consensusVal)
 
 	consensusAsByte := []byte(fmt.Sprintf("%d", consensusVal))
 	_, err := zkConnection.Set(consensusPath, consensusAsByte, zkStat.Version)
 	if err != nil {
-		return fmt.Errorf("node id=%v could not set consensus value: %v", nodeId, err)
+		return fmt.Errorf("node with id=%v could not set consensus value: %v", nodeId, err)
 	}
 
 	return nil
