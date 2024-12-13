@@ -71,8 +71,9 @@ func serverAsWebserver() {
 
 func serverAsLoop() {
 
-	instanceCount := 20
-	var zkCandidates [20](*zk.ElectionCandidate)
+	instanceCount := 5
+	raceConditionCount := 20
+	var zkCandidates [5](*zk.ElectionCandidate)
 
 	//Init all candidates config to connect to Zookeeper
 	for i := 0; i < instanceCount; i++ {
@@ -91,8 +92,8 @@ func serverAsLoop() {
 	}
 
 	//Start all goroutine
-	commands := []string{"INC", "INC", "INC", "INC", "INC", "INC", "INC", "INC", "INC", "INC"}
-	for roundIdx, cmd := range commands {
+	for roundIdx := 0; roundIdx < raceConditionCount; roundIdx++ {
+		cmd := "INC"
 		fmt.Printf("Round %v start\n", roundIdx)
 		var wg sync.WaitGroup
 
@@ -112,10 +113,6 @@ func serverAsLoop() {
 		wg.Wait()
 
 		fmt.Printf("Round %v end\n", roundIdx)
-	}
-
-	for i := 0; i < instanceCount; i++ {
-
 	}
 }
 
