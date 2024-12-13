@@ -72,7 +72,7 @@ func serverAsWebserver() {
 func serverAsLoop() {
 
 	instanceCount := 5
-	raceConditionCount := 20
+	raceConditionCount := 500
 	var zkCandidates [5](*zk.ElectionCandidate)
 
 	//Init all candidates config to connect to Zookeeper
