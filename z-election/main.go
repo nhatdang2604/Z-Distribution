@@ -71,8 +71,8 @@ func serverAsWebserver() {
 
 func serverAsLoop() {
 
-	instanceCount := 10
-	var zkCandidates [10](*zk.ElectionCandidate)
+	instanceCount := 20
+	var zkCandidates [20](*zk.ElectionCandidate)
 
 	//Init all candidates config to connect to Zookeeper
 	for i := 0; i < instanceCount; i++ {
@@ -86,30 +86,37 @@ func serverAsLoop() {
 		)
 		zkElectionCandidate := zk.NewElectionCandidate(zkConfig)
 		zkCandidates[i] = zkElectionCandidate
+		zkCandidates[i].Start()
+		defer zkCandidates[i].Stop()
 	}
 
 	//Start all goroutine
-	var wg sync.WaitGroup
 	commands := []string{"INC", "INC", "INC", "INC", "INC", "INC", "INC", "INC", "INC", "INC"}
-	for _, zkElectionCandidate := range zkCandidates {
-		zkElectionCandidate.Start()
-		defer zkElectionCandidate.Stop()
-		wg.Add(1) // Increment the counter for each goroutine
-		go func() {
+	for roundIdx, cmd := range commands {
+		fmt.Printf("Round %v start\n", roundIdx)
+		var wg sync.WaitGroup
 
-			// Signal that this goroutine is done
-			defer wg.Done()
+		for _, zkElectionCandidate := range zkCandidates {
+			wg.Add(1) // Increment the counter for each goroutine
+			go func() {
 
-			// Read commands from user
-			for _, cmd := range commands {
+				// Signal that this goroutine is done
+				defer wg.Done()
+
 				cmd = strings.ToLower(cmd)
 				zkElectionCandidate.Handle(cmd)
-			}
-		}()
+			}()
+		}
+
+		//Wait all goroutine to finish
+		wg.Wait()
+
+		fmt.Printf("Round %v end\n", roundIdx)
 	}
 
-	//Wait all goroutine to finish
-	wg.Wait()
+	for i := 0; i < instanceCount; i++ {
+
+	}
 }
 
 func main() {
